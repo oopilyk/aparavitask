@@ -1,3 +1,5 @@
 # .gitignore
 rag-env
 backend/.env
+backend/plugins
+whisper-env
