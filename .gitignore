@@ -1,0 +1,3 @@
+# .gitignore
+rag-env
+backend/.env
