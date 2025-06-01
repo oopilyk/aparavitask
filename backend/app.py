@@ -68,3 +68,47 @@ results = search(query)
 print("\nQDRANT SEARCH RESULTS:")
 for r in results:
     print("-", r.payload["text"][:100], "...\n")
+
+
+from graphdb.neo4j_setup import get_related_entities
+
+
+def hybrid_search(user_query: str, structured_filter_source: str, relation_type=None):
+    """
+    Perform a hybrid search using Neo4j for entity filtering and Qdrant for vector search.
+    """
+    print(f"\n🔎 Hybrid Search for: '{user_query}' via '{structured_filter_source}'")
+
+    try:
+        # Step 1: Use Neo4j to get entity names
+        neo4j_driver = connect_to_neo4j(
+            "bolt://localhost:7687", "neo4j", "strongpassword123"
+        )
+        related_entities = get_related_entities(structured_filter_source, relation_type)
+        print("Entities from Neo4j:", related_entities)
+    except Exception as e:
+        print(f"❌ Error during Neo4j operation: {e}")
+        related_entities = []  # Fallback to no filtering
+    finally:
+        if neo4j_driver:
+            close_connection()
+
+    # Step 2: Use related entities to filter/rerank Qdrant results
+    try:
+        results = search(user_query, top_k=5, filter_terms=related_entities)
+        print("\nQDRANT RESULTS:")
+        for r in results:
+            print("-", r.payload["text"][:100], "...")
+    except Exception as e:
+        print(f"❌ Error during Qdrant search: {e}")
+        results = []
+
+    return results
+
+
+# Example usage
+hybrid_search(
+    "Tell me about acquisitions",
+    structured_filter_source="Apple",
+    relation_type="acquired",
+)

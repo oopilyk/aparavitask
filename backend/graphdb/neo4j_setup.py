@@ -8,6 +8,7 @@ NEO4J_PASS = "strongpassword123"  # match your docker run password
 # Global variable to store the Neo4j driver
 neo4j_driver = None
 
+
 def connect_to_neo4j(uri, user, password):
     """
     Establish a connection to Neo4j and return the driver.
@@ -24,6 +25,7 @@ def connect_to_neo4j(uri, user, password):
         print("❌ Failed to connect to Neo4j:", e)
         raise e
 
+
 def close_connection():
     """
     Close the Neo4j connection.
@@ -34,6 +36,25 @@ def close_connection():
         print("Closed Neo4j connection.")
         neo4j_driver = None
 
+
+def get_related_entities(source, relation_type):
+    """
+    Query Neo4j to get related entities based on the source and relation type.
+    """
+    global neo4j_driver
+    if not neo4j_driver:
+        raise Exception("Neo4j driver is not initialized. Call connect_to_neo4j first.")
+
+    with neo4j_driver.session() as session:
+        query = """
+        MATCH (a:Entity {name: $source})-[r]->(b:Entity)
+        WHERE $rel IS NULL OR r.type = $rel
+        RETURN DISTINCT b.name AS name
+        """
+        result = session.run(query, source=source, rel=relation_type)
+        return [record["name"] for record in result]
+
+
 def insert_graph_data(entities, relationships):
     """
     Insert entities and relationships into the Neo4j graph database.
@@ -41,7 +62,7 @@ def insert_graph_data(entities, relationships):
     global neo4j_driver
     if not neo4j_driver:
         raise Exception("Neo4j driver is not initialized. Call connect_to_neo4j first.")
-    
+
     with neo4j_driver.session() as session:
         for name in entities:
             print(f"🔄 Inserting entity: {name}")
@@ -49,12 +70,18 @@ def insert_graph_data(entities, relationships):
 
         for rel in relationships:
             print(f"🔗 Creating relationship: {rel}")
-            session.run("""
+            session.run(
+                """
                 MATCH (a:Entity {name: $source})
                 MATCH (b:Entity {name: $target})
                 MERGE (a)-[:RELATION {type: $relation, extra: $extra}]->(b)
-            """, source=rel["source"], target=rel["target"],
-                 relation=rel["relation"], extra=str(rel.get("extra", {})))
+            """,
+                source=rel["source"],
+                target=rel["target"],
+                relation=rel["relation"],
+                extra=str(rel.get("extra", {})),
+            )
+
 
 # Example usage:
 if __name__ == "__main__":
@@ -62,8 +89,13 @@ if __name__ == "__main__":
         connect_to_neo4j(NEO4J_URI, NEO4J_USER, NEO4J_PASS)
         entities = ["Alice", "Bob", "Charlie"]
         relationships = [
-            {"source": "Alice", "target": "Bob", "relation": "KNOWS", "extra": {"since": 2020}},
-            {"source": "Bob", "target": "Charlie", "relation": "WORKS_WITH"}
+            {
+                "source": "Alice",
+                "target": "Bob",
+                "relation": "KNOWS",
+                "extra": {"since": 2020},
+            },
+            {"source": "Bob", "target": "Charlie", "relation": "WORKS_WITH"},
         ]
         insert_graph_data(entities, relationships)
     finally:
