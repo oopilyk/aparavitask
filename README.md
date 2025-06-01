@@ -1,0 +1,2 @@
+# aparavitask
+Aparavi AI Challenge
