@@ -3,6 +3,7 @@ from ingest.text import extract_text_from_pdf
 from ingest.image_ocr import extract_text_from_image
 from extract.entity_graph_builder import extract_entities_and_relationships
 from graphdb.neo4j_setup import connect_to_neo4j, insert_graph_data, close_connection
+
 # from vectordb.qdrant_setup import init_collection, add_document, search
 import tempfile
 import os
@@ -10,7 +11,7 @@ import uuid
 
 st.title("🧠 Multimodal RAG Assistant (PDF & Image)")
 
-# init_collection()
+init_collection()
 
 uploaded_file = st.file_uploader(
     "Upload a PDF or Image", type=["pdf", "jpg", "jpeg", "png"]
@@ -48,7 +49,9 @@ if uploaded_file is not None:
                 st.write("Relationships:", graph["relationships"])
 
                 # Insert into Neo4j
-                connector = connect_to_neo4j("bolt://localhost:7687", "neo4j", "strongpassword123")
+                connector = connect_to_neo4j(
+                    "bolt://localhost:7687", "neo4j", "strongpassword123"
+                )
                 connector.insert_graph_data(graph["entities"], graph["relationships"])
                 connector.close()
                 st.success("✅ Inserted into Neo4j")
