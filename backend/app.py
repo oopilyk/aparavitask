@@ -1,3 +1,6 @@
+import sys
+print(">>> Python Path:", sys.executable)
+
 from ingest.text import extract_text_from_pdf
 from ingest.image_ocr import extract_text_from_image
 from ingest.audio_transcribe import transcribe_audio
@@ -30,18 +33,20 @@ if __name__ == "__main__":
 
 from graphdb.neo4j_setup import connect_to_neo4j, insert_graph_data, close_connection
 
-sample_graph = {
-    "entities": ["Apple", "Beats"],
-    "relationships": [
-        {"source": "Apple", "relation": "acquired", "target": "Beats", "extra": {"year": "2014", "amount": "$3B"}}
-    ]
-}
+# sample_graph = {
+#     "entities": ["Apple", "Beats"],
+#     "relationships": [
+#         {"source": "Apple", "relation": "acquired", "target": "Beats", "extra": {"year": "2014", "amount": "$3B"}}
+#     ]
+# }
+
+
 
 # Connect to Neo4j
 connect_to_neo4j("bolt://localhost:7687", "neo4j", "strongpassword123")
 
 # Insert to Neo4j
-insert_graph_data(sample_graph["entities"], sample_graph["relationships"])
+insert_graph_data(graph["entities"], graph["relationships"])
 
 # Close connection
 close_connection()
@@ -97,6 +102,7 @@ def hybrid_search(user_query: str, structured_filter_source: str, relation_type=
     try:
         results = search(user_query, top_k=5, filter_terms=related_entities)
         print("\nQDRANT RESULTS:")
+        print("Raw Qdrant results:", results)
         for r in results:
             print("-", r.payload["text"][:100], "...")
     except Exception as e:
