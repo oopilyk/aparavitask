@@ -26,10 +26,12 @@ def init_collection():
     Create the Qdrant collection with the correct vector dimension and distance,
     if it doesn't already exist.
     """
-    if COLLECTION_NAME not in client.get_collections().collections:
-        client.recreate_collection(
+    existing = client.get_collections().collections
+    names = [c.name for c in existing]
+    if COLLECTION_NAME not in names:
+        client.create_collection(
             collection_name=COLLECTION_NAME,
-            vectors_config=VectorParams(size=VECTOR_DIM, distance=Distance.COSINE),
+            vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
         )
 
 

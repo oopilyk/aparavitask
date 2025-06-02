@@ -1,40 +1,62 @@
 import openai
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
+# Load the .env file
 load_dotenv()
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def extract_entities_and_relationships(text):
+# Set the OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+def extract_entities_and_relationships(text: str):
+    """
+    Use OpenAI to extract entities and relationships from text in a structured format.
+    Returns a dictionary with "entities" and "relationships".
+    """
     prompt = f"""
-Extract all relevant entities and relationships from the following text. 
-Return a JSON object with two fields: 
-- "entities": a list of unique names
-- "relationships": a list of triples in the form:
-  {{
-    "source": "Entity A",
-    "relation": "relation_type",
-    "target": "Entity B",
-    "extra": {{ optional extra info like date, amount, etc }}
-  }}
+You are an expert at understanding technical documents. Extract a list of distinct entities and their relationships from the following text. 
+Format your response as JSON with two keys: "entities" (a list of unique string names) and "relationships" 
+(a list of dictionaries with "source", "relation", "target", and optional "extra").
 
-TEXT:
+Text:
 \"\"\"
 {text}
 \"\"\"
+Only return JSON. Example format:
+{{
+  "entities": ["Apple", "Beats"],
+  "relationships": [
+    {{"source": "Apple", "relation": "acquired", "target": "Beats", "extra": {{"year": "2014"}}}}
+  ]
+}}
 """
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
+        response = openai.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You extract entities and relationships from technical content.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
         )
-        content = response.choices[0].message.content
-        return eval(content)
+
+        content = response.choices[0].message.content.strip()
+
+        # Safely evaluate JSON using standard library
+        import json
+
+        graph = json.loads(content)
+
+        # Fallback structure if keys are missing
+        entities = graph.get("entities", [])
+        relationships = graph.get("relationships", [])
+        return {"entities": entities, "relationships": relationships}
+
     except Exception as e:
-        print(f"Failed to parse LLM response: {e}")
-        return {
-            "entities": [],
-            "relationships": []
-        }
+        print("❌ LLM extraction failed:", e)
+        return {"entities": [], "relationships": []}

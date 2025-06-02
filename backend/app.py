@@ -1,4 +1,5 @@
 import sys
+import openai
 
 print(">>> Python Path:", sys.executable)
 
@@ -78,7 +79,7 @@ from sentence_transformers import SentenceTransformer
 
 
 # -----------------------
-# 1) A small Neo4j helper.
+# 1) A small Neo4j helper
 # -----------------------
 class Neo4jConnector:
     def __init__(self, uri, user, password):
@@ -159,8 +160,16 @@ def hybrid_search(user_query: str, source_node: str, relation_type: str = None):
     # print(qdrant_filter)
 
     # 3) Compute query_vector
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    query_vector = model.encode(user_query).tolist()
+
+
+    def get_openai_embedding(text):
+            response = openai.embeddings.create(
+                model="text-embedding-ada-002",
+                input=text
+            )
+            return response.data[0].embedding
+
+    query_vector = get_openai_embedding(user_query)
 
     # 4) Qdrant client + search
     client = QdrantClient(host="localhost", port=6333)

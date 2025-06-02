@@ -55,9 +55,7 @@ if uploaded_file is not None:
                 st.write("Entities:", graph["entities"])
                 st.write("Relationships:", graph["relationships"])
 
-                connect_to_neo4j(
-                    "bolt://localhost:7687", "neo4j", "strongpassword123"
-                )
+                connect_to_neo4j("bolt://localhost:7687", "neo4j", "strongpassword123")
                 insert_graph_data(graph["entities"], graph["relationships"])
                 close_connection()
                 st.success("✅ Inserted into Neo4j")
@@ -118,25 +116,30 @@ def hybrid_search(user_query: str, source_node: str, relation_type: str = None):
 
     qdrant_filter = None
     if related:
-        must_conditions = [
-            FieldCondition(key="text", match=MatchValue(value=f"*{ent}*"))
-            for ent in related
-        ]
+        must_conditions = []
+        for ent in related:
+            must_conditions.append(
+                FieldCondition(key="text", match=MatchValue(value="ent"))
+            )
         qdrant_filter = Filter(
             should=must_conditions,
             must=None,
             must_not=None,
             min_should=MinShould(conditions=must_conditions, min_count=1),
         )
+        print("qdrant_filter")
+        print(qdrant_filter)
 
     try:
         query_vector = get_openai_embedding(user_query)
+
         results = client.search(
-            collection_name=COLLECTION_NAME,
+            collection_name="rag_chunks",
             query_vector=query_vector,
             limit=5,
-            query_filter=qdrant_filter,
+            query_filter=None,
         )
+
         return results
     except Exception as e:
         st.error(f"Qdrant search error: {e}")
