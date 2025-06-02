@@ -137,7 +137,7 @@ def hybrid_search(user_query: str, source_node: str, relation_type: str = None):
             collection_name="rag_chunks",
             query_vector=query_vector,
             limit=5,
-            query_filter=None,
+            query_filter=qdrant_filter,
         )
 
         return results
