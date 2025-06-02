@@ -78,7 +78,7 @@ from sentence_transformers import SentenceTransformer
 
 
 # -----------------------
-# 1) A small Neo4j helper
+# 1) A small Neo4j helper.
 # -----------------------
 class Neo4jConnector:
     def __init__(self, uri, user, password):
