@@ -16,30 +16,23 @@ if __name__ == "__main__":
 
     # --- Image Test ---
     image_data = extract_text_from_image("data/sample_files/sample_image.jpg")
-    # print("\nIMAGE METADATA:", image_data["metadata"])
-    # print("IMAGE TEXT:", image_data["text"][:500])
+    print("\nIMAGE METADATA:", image_data["metadata"])
+    print("IMAGE TEXT:", image_data["text"][:500])
 
     # --- Audio Test ---
     audio_data = transcribe_audio("data/sample_files/sample_audio.mp3")
-    # print("\nAUDIO METADATA:", audio_data["metadata"])
-    # print("AUDIO TEXT:", audio_data["text"][:500])
+    print("\nAUDIO METADATA:", audio_data["metadata"])
+    print("AUDIO TEXT:", audio_data["text"][:500])
 
     # --- Entity Extraction Test (choose one source) ---
     sample_text = pdf_data["text"]  # Or use image_data["text"], audio_data["text"]
     graph = extract_entities_and_relationships(sample_text)
 
-    # print("\nENTITIES:", graph["entities"])
-    # print("RELATIONSHIPS:")
-    # for rel in graph["relationships"]:
-    #     print("-", rel)
+    print("\nENTITIES:", graph["entities"])
+    print("RELATIONSHIPS:")
+    for rel in graph["relationships"]:
+        print("-", rel)
 
-
-# sample_graph = {
-#     "entities": ["Apple", "Beats"],
-#     "relationships": [
-#         {"source": "Apple", "relation": "acquired", "target": "Beats", "extra": {"year": "2014", "amount": "$3B"}}
-#     ]
-# }
 
 from graphdb.neo4j_setup import connect_to_neo4j, insert_graph_data, close_connection
 
@@ -75,16 +68,6 @@ driver = GraphDatabase.driver(
     "bolt://localhost:7687", auth=("neo4j", "strongpassword123")
 )
 
-
-# def get_all_data():
-#     with driver.session() as session:
-#         result = session.run("MATCH (a)-[r]->(b) RETURN a, type(r) AS rel, b")
-#         return [record.data() for record in result]
-
-
-# all_data = get_all_data()
-# for row in all_data:
-#     print(row)
 
 from graphdb.neo4j_setup import connect_to_neo4j, get_related_entities, close_connection
 from vectordb.qdrant_setup import search
@@ -143,7 +126,8 @@ def hybrid_search(user_query: str, source_node: str, relation_type: str = None):
     # 1) Neo4j lookup
     connector = Neo4jConnector("bolt://localhost:7687", "neo4j", "strongpassword123")
     try:
-        related = connector.get_related_entities(source_node, relation_type)
+        related = connector.get_related_entities(source_node, None)
+        print("Entities from Neo4j:", related)
         # Always include the source itself so "*source_node*" will match at least one chunk
         if source_node not in related:
             related.insert(0, source_node)
@@ -200,16 +184,16 @@ def hybrid_search(user_query: str, source_node: str, relation_type: str = None):
 # -----------------------
 
 # Example A: filter on “Hybrid Search”
-hybrid_search(user_query="What do cats like", source_node="cats")
+# hybrid_search(user_query="What do cats like", source_node="cow")
 
 # Example B: filter on “knowledge graph”
-# hybrid_search(
-#     user_query="What is a searchable knowledge graph?", source_node="knowledge graph"
-# )
+hybrid_search(
+    user_query="What is a searchable knowledge graph?", source_node="knowledge graph"
+)
 
-# # Example C: filter on the full long title (copy exactly from your chunk)
-# long_title = "Multimodal Enterprise RAG – Leveraging Knowledge Graphs and Hybrid Search"
-# hybrid_search(user_query="Describe this RAG challenge", source_node=long_title)
+# Example C: filter on the full long title (copy exactly from your chunk)
+long_title = "Multimodal Enterprise RAG – Leveraging Knowledge Graphs and Hybrid Search"
+hybrid_search(user_query="Describe this RAG challenge", source_node=long_title)
 
 
 # Example usage
